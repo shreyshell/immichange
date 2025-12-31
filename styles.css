@@ -1,0 +1,861 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+/* Ensure crisp SVG rendering globally */
+svg {
+    shape-rendering: geometricPrecision;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+img[src$=".svg"] {
+    shape-rendering: geometricPrecision;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+body {
+    font-family: 'Manrope', sans-serif;
+    background: white;
+    margin: 0;
+    padding: 0;
+}
+
+/* Dotted background pattern - covers everything below header */
+body::after {
+    content: '';
+    position: absolute; /* Changed from fixed to absolute so it scrolls with content */
+    top: 88px; /* Start below the header divider */
+    left: 0;
+    right: 0;
+    height: 919px; /* Precise height: total page (1007px) - header area (88px) */
+    background-image: 
+        radial-gradient(circle, rgba(0, 55, 255, 0.15) 1.5px, transparent 1.5px);
+    background-size: 20px 20px;
+    background-repeat: repeat;
+    pointer-events: none;
+    z-index: 0; /* Behind everything except the base background */
+}
+
+.homepage {
+    position: relative;
+    width: 100vw; /* Full viewport width */
+    height: 1007px; /* Precise height: dashboard end (967px) + 40px spacing */
+    z-index: 1; /* Above the dotted background */
+}
+
+/* Header Section */
+.header {
+    position: absolute; /* Changed back to absolute so it scrolls with content */
+    top: 23px;
+    left: 24px;
+    right: 24px;
+    height: 41px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    z-index: 100; /* Ensure it stays on top */
+}
+
+/* Logo Section - Exact Figma positioning */
+.logo {
+    position: absolute;
+    left: 0; /* Relative to header which is already at 24px */
+    top: 0; /* Relative to header which is already at 23px */
+    width: 219px; /* Full SVG width */
+    height: 41px; /* Full SVG height */
+}
+
+.logo-icon {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 219px; /* Back to original size */
+    height: 41px; /* Back to original size */
+    /* Ensure crisp SVG rendering */
+    shape-rendering: geometricPrecision;
+}
+
+/* Header Divider - Exact Figma positioning */
+.header-divider {
+    position: absolute; /* Changed back to absolute so it scrolls with content */
+    top: 88px;
+    left: 0;
+    width: 100vw;
+    height: 1px; /* Updated to match dashboard container border thickness */
+    background: #24315e; /* Updated to match dashboard container border color */
+    z-index: 99; /* Below header but above other content */
+}
+
+/* Country Selection Section */
+.country-selection {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden; /* Prevent gradients from causing scrollbars */
+}
+
+/* Figma-accurate background gradients */
+.gradient-1 {
+    position: absolute;
+    left: -800px; /* Extended further left */
+    top: -900px; /* Extended further up */
+    width: 1400px; /* Larger to ensure no edges */
+    height: 1400px; /* Larger to ensure no edges */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1; /* Behind all other elements */
+}
+
+.gradient-1::before {
+    content: '';
+    width: 800px; /* Larger gradient area */
+    height: 1000px; /* Larger gradient area */
+    background: linear-gradient(to bottom, rgba(0, 55, 255, 0.35), rgba(255, 255, 255, 0.35)); /* Increased opacity for visibility */
+    transform: rotate(143.481deg) scaleY(-1);
+}
+
+.gradient-2 {
+    position: fixed; /* Changed to fixed so it stays at bottom during scroll */
+    right: -800px; /* Extended further right */
+    bottom: -900px; /* Extended further down */
+    width: 1400px; /* Larger to ensure no edges */
+    height: 1400px; /* Larger to ensure no edges */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1; /* Behind all other elements */
+}
+
+.gradient-2::before {
+    content: '';
+    width: 800px; /* Larger gradient area */
+    height: 800px; /* Larger gradient area */
+    background: linear-gradient(to bottom, rgba(0, 55, 255, 0.35), rgba(255, 255, 255, 0.35)); /* Same opacity as gradient-1 */
+    transform: rotate(308.77deg) scaleY(-1);
+}
+
+/* Custom curved dotted line - Semi-circle connecting country fields */
+.curved-dotted-line {
+    position: absolute;
+    left: 25%; /* Start at origin field center */
+    top: 302px; /* Center of country fields */
+    width: 50%; /* Span from origin to immigration */
+    height: 200px; /* Much higher for curve to reach passport center */
+    z-index: 1; /* Behind country fields and passport */
+    pointer-events: none;
+    border-top: 3px dashed #0037ff;
+    border-radius: 50% 50% 0 0; /* Create semi-circle top */
+    transform: translateY(-100px); /* Move up significantly more */
+}
+
+
+
+/* Passport Graphic - Simple centered positioning */
+.passport-graphic {
+    position: absolute;
+    left: 50%;
+    top: 150px;
+    transform: translateX(-50%);
+    width: 92px;
+    height: 105px;
+    z-index: 3; /* Above curved line and arrows */
+}
+
+.passport-graphic .passport-icon {
+    width: 100%;
+    height: 100%;
+    shape-rendering: geometricPrecision;
+}
+
+/* Country Fields - Simple centered positioning */
+.country-field {
+    position: absolute;
+    width: 200px;
+    height: 45px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: rgba(36, 49, 94, 0.45);
+    top: 280px;
+    z-index: 3; /* Above curved line and arrows */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.country-field.origin {
+    left: 25%;
+    transform: translateX(-50%);
+    /* Gradient border: #0037FF to #FFFFFF (Right to Left) */
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(to left, #0037FF, #FFFFFF) border-box;
+}
+
+.country-field.destination {
+    right: 25%;
+    transform: translateX(50%);
+    /* Gradient border: #0037FF to #FFFFFF (Left to Right) - flipped from origin */
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(to right, #0037FF, #FFFFFF) border-box;
+}
+
+/* Launch Path Explorer Button - Simple centered positioning */
+.explore-button {
+    position: absolute;
+    left: 50%;
+    top: 370px; /* Moved down from 350px */
+    transform: translateX(-50%);
+    width: 177px;
+    height: 35px;
+    background: #e5ebff;
+    border: 2px solid #0037ff;
+    border-radius: 35px;
+    color: #0037ff;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 2; /* Above gradients */
+}
+
+.explore-button:hover {
+    box-shadow: 0 4px 12px rgba(0, 55, 255, 0.3);
+    transform: translateX(-50%) translateY(-2px);
+}
+
+/* Pulse animation for coming soon disclaimer */
+.coming-soon-disclaimer.pulse {
+    animation: pulse 0.6s ease-in-out;
+}
+
+/* Coming Soon Disclaimer - Positioned relative to explore button */
+.coming-soon-disclaimer {
+    position: absolute;
+    left: calc(50% - 88.5px - 40px); /* Moved right from 60px to 40px */
+    top: calc(370px - 50px); /* Moved further up to avoid covering text */
+    transform: rotate(-10deg);
+    width: 100px;
+    height: 60px;
+    background: #aaa;
+    border: 3px solid #24315e;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 10px;
+    color: #eaf11d;
+    text-align: center;
+    line-height: 1.2;
+    z-index: 10; /* Above everything */
+    transition: transform 0.3s ease;
+}
+
+.coming-soon-disclaimer.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+.disclaimer-content p {
+    margin: 2px 0;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: rotate(-10deg) scale(1); }
+    50% { transform: rotate(-10deg) scale(1.15); }
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    position: absolute;
+    left: 48px; /* Updated to 48px for narrower width */
+    top: 507px; /* Matches Figma positioning */
+    width: calc(100vw - 96px); /* Full width minus 48px margins on each side */
+    height: 460px; /* Extended by 10px for better bottom spacing (was 450px) */
+    background: #f5f7ff; /* Light blue-gray background from Figma */
+    border: 1px solid #24315e; /* Dark blue border on all sides */
+    border-radius: 21px; /* Exact Figma border radius */
+    z-index: 2; /* Above gradients but below other UI elements */
+}
+
+/* Dashboard Divider */
+.dashboard-divider {
+    position: absolute;
+    left: 48px; /* Same 48px margin as dashboard container */
+    top: 552px; /* Matches Figma positioning */
+    width: calc(100vw - 96px); /* Same width as dashboard container */
+    height: 1px; /* Thin horizontal line */
+    background: #24315e; /* Same color as dashboard container border */
+    z-index: 3; /* Above dashboard container */
+}
+
+/* Change Tracker Title */
+.change-tracker-title {
+    position: absolute;
+    left: 70px; /* Matches Figma positioning with slight offset from container edge */
+    top: 470px; /* Matches Figma positioning */
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600; /* SemiBold */
+    font-size: 20px;
+    color: #24315e; /* Dark blue color from Figma */
+    margin: 0; /* Remove default margins */
+    z-index: 3; /* Above dashboard container */
+}
+
+/* Filter Button */
+.filter-button {
+    position: absolute;
+    left: 250px; /* 20px to the right of Change Tracker title (70px + ~160px title width + 20px) */
+    top: 471px; /* Matches Figma positioning */
+    width: 88px; /* Exact Figma width */
+    height: 25px; /* Exact Figma height */
+    background: #e5ebff; /* Light blue background */
+    border: 1.5px solid #0037ff; /* Blue border */
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Space between icon and text */
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600; /* SemiBold */
+    font-size: 14px;
+    color: #0037ff; /* Blue text */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 3; /* Above dashboard container */
+}
+
+.filter-button:hover {
+    background: #d4e3ff;
+    transform: translateY(-1px);
+}
+
+.filter-icon {
+    width: 18.5px;
+    height: 10.967px;
+    flex-shrink: 0;
+}
+
+/* 300 recorded updates text */
+.recorded-updates-text {
+    position: absolute;
+    right: 256px; /* Moved 20px to the left (was 236px) */
+    top: 475px; /* Matches Figma positioning */
+    font-family: 'Manrope', sans-serif;
+    font-weight: 500; /* Medium */
+    font-size: 14px;
+    color: #24315e; /* Dark blue color */
+    text-align: right;
+    margin: 0;
+    z-index: 3; /* Above dashboard container */
+}
+
+/* of 30 pages text */
+.pages-text {
+    position: absolute;
+    right: 90px; /* Moved 20px to the left (was 70px) */
+    top: 473px; /* Matches Figma positioning */
+    font-family: 'Manrope', sans-serif;
+    font-weight: 500; /* Medium */
+    font-size: 15px;
+    color: #24315e; /* Dark blue color */
+    text-align: right;
+    margin: 0;
+    z-index: 3; /* Above dashboard container */
+}
+
+/* # of Updates This Week Badge */
+.updates-this-week-badge {
+    position: absolute;
+    right: 30px; /* Moved 20px more to the right (was 50px) */
+    top: 485px; /* Matches Figma positioning */
+    width: 45px;
+    height: 45px;
+    background: #eaf11d; /* Yellow background from Figma */
+    border: 1px solid #24315e; /* Dark blue border */
+    border-radius: 22.5px; /* Perfect circle */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 400; /* Regular */
+    font-size: 20px;
+    color: #24315e; /* Dark blue text */
+    z-index: 10; /* Above everything to prevent overlap issues */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.updates-this-week-badge:hover {
+    width: 160px; /* Expand to show full text */
+    border-radius: 22.5px; /* Keep rounded corners */
+    padding: 0 15px; /* Add padding for text */
+    justify-content: flex-start; /* Align text to left when expanded */
+}
+
+.updates-this-week-badge .badge-text {
+    transition: opacity 0.3s ease;
+    font-size: 14px;
+    font-weight: 600; /* SemiBold for expanded text */
+}
+
+.updates-this-week-badge .badge-number {
+    transition: all 0.3s ease;
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.updates-this-week-badge:hover .badge-number {
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: 5px;
+}
+
+.updates-this-week-badge .badge-text {
+    opacity: 0;
+    display: none;
+}
+
+.updates-this-week-badge:hover .badge-text {
+    opacity: 1;
+    display: inline;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+    position: absolute;
+    right: 185px; /* Moved 20px to the left (was 165px) */
+    top: 473px;
+    display: flex;
+    gap: 5px; /* Small gap between elements */
+    z-index: 3;
+}
+
+.page-arrow, .page-number {
+    width: 15px;
+    height: 21px;
+    background: white;
+    border: 1px solid rgba(36, 49, 94, 0.6);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 500; /* Medium */
+    color: #24315e;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-arrow {
+    font-size: 16px;
+}
+
+.page-number {
+    font-size: 12px;
+    cursor: default;
+}
+
+.page-arrow:hover {
+    background: #f0f0f0;
+    border-color: #24315e;
+}
+
+/* Column Titles */
+.column-titles {
+    position: absolute;
+    left: 70px; /* Add margin from left edge of rectangle */
+    top: 520px; /* Matches Figma positioning */
+    z-index: 3;
+}
+
+.column-title {
+    position: absolute;
+    background: #e5ebff; /* Light blue background */
+    border: 1px solid #0037ff; /* Blue border */
+    border-radius: 10px;
+    height: 22px; /* Matches Figma height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px; /* Space between icon and text */
+    padding: 0 10px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600; /* SemiBold */
+    font-size: 12px;
+    color: #0037ff; /* Blue text */
+    white-space: nowrap;
+}
+
+/* Fixed positions for each column title - 30px spacing between columns */
+.country-title { 
+    left: 0px; 
+    width: 67px; 
+}
+.visa-type-title { 
+    left: 97px; /* 67px + 30px spacing */
+    width: 100px; /* Increased from 72px to 100px */
+}
+.change-type-title { 
+    left: 227px; /* 97px + 100px + 30px spacing */
+    width: 108px; 
+}
+.affected-groups-title { 
+    left: 365px; /* 227px + 108px + 30px spacing */
+    width: 140px; /* Increased from 112px to 140px */
+}
+.severity-title { 
+    left: 535px; /* 365px + 140px + 30px spacing */
+    width: 66px; 
+}
+.summary-title { 
+    left: 631px; /* 535px + 66px + 30px spacing */
+    width: 200px; 
+}
+.sources-title { 
+    left: 861px; /* 631px + 200px + 30px spacing */
+    width: 120px; 
+}
+.timestamp-title { 
+    left: 1011px; /* 861px + 120px + 30px spacing */
+    width: 130px; 
+}
+.effective-date-title { 
+    left: 1171px; /* 1011px + 130px + 30px spacing */
+    width: 150px; 
+}
+
+/* Sort arrows for timestamp and effective date */
+.timestamp-title svg,
+.effective-date-title svg {
+    width: 8px;
+    height: 5px;
+    flex-shrink: 0;
+}
+
+/* Data Rows */
+.data-rows {
+    position: absolute;
+    left: 70px; /* Same margin as column titles */
+    top: 560px; /* Below column titles */
+    z-index: 3;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 20px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    color: #24315e;
+}
+
+.data-row {
+    position: relative;
+    margin-bottom: 10px;
+    min-height: 30px;
+}
+
+.data-cell {
+    position: absolute;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600; /* SemiBold */
+    font-size: 14px;
+    color: #24315e;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Fixed positions for each data cell - matching column title positions exactly */
+.data-cell.country { 
+    left: 0px; 
+    width: 67px; 
+}
+.data-cell.visa-type { 
+    left: 97px; /* 67px + 30px spacing */
+    width: 100px; /* Increased from 72px to 100px */
+}
+.data-cell.change-type { 
+    left: 227px; /* 97px + 100px + 30px spacing */
+    width: 108px; 
+}
+.data-cell.affected-groups { 
+    left: 365px; /* 227px + 108px + 30px spacing */
+    width: 140px; /* Increased from 112px to 140px */
+}
+.data-cell.severity { 
+    left: 535px; /* 365px + 140px + 30px spacing */
+    width: 66px; 
+}
+.data-cell.summary { 
+    left: 631px; /* 535px + 66px + 30px spacing */
+    width: 200px; /* Increased from 150px to 200px */
+}
+.data-cell.sources { 
+    left: 861px; /* 631px + 200px + 30px spacing */
+    width: 120px; /* Increased from 100px to 120px */
+}
+.data-cell.timestamp { 
+    left: 1011px; /* 861px + 120px + 30px spacing */
+    width: 130px; /* Increased from 96px to 130px */
+}
+.data-cell.effective-date { 
+    left: 1171px; /* 1011px + 130px + 30px spacing */
+    width: 150px; /* Keep at 150px */
+}
+
+/* Severity Tags - matching Figma design */
+.severity-tag {
+    height: 22px;
+    border-radius: 10px;
+    border: 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600; /* SemiBold */
+    font-size: 12px;
+    white-space: nowrap;
+    width: 66px;
+}
+
+.severity-tag.high {
+    background: #fad1d1;
+    border-color: #f73d3d;
+    color: #f73d3d;
+}
+
+.severity-tag.medium {
+    background: #faf0ce;
+    border-color: #f3c82d;
+    color: #f3c82d;
+}
+
+.severity-tag.low {
+    background: #d4eed4;
+    border-color: #11af23;
+    color: #11af23;
+}
+
+/* Timestamp Tags - matching Figma design */
+.timestamp-tag {
+    height: 22px;
+    border-radius: 10px;
+    border: 1px solid #656565;
+    background: #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700; /* Made bold */
+    font-size: 10px; /* Increased from 8px to 10px */
+    color: #656565;
+    white-space: nowrap;
+    width: 130px; /* Increased to match new column width */
+}
+
+/* Summary cell - truncate long text */
+.data-cell.summary {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.summary-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.expand-summary-btn {
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: #666666;
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: normal;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    line-height: 0;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.expand-summary-btn:hover {
+    background: #444444;
+    transform: scale(1.1);
+}
+
+/* Summary Modal Overlay */
+.summary-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.summary-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.summary-modal {
+    background: white;
+    border-radius: 15px;
+    padding: 24px;
+    max-width: 600px;
+    max-height: 80vh;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow-y: auto;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.summary-modal-overlay.active .summary-modal {
+    transform: scale(1);
+}
+
+.summary-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.summary-modal-title {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: #24315e;
+    margin: 0;
+}
+
+.close-modal-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #f0f0f0;
+    color: #666;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.close-modal-btn:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.summary-modal-content {
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #24315e;
+    text-align: left;
+}
+
+.summary-modal-meta {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e5e5;
+    font-size: 12px;
+    color: #666;
+}
+
+.summary-modal-meta-item {
+    margin-bottom: 4px;
+}
+
+/* Sources link */
+.sources-link {
+    color: #0090ff;
+    text-decoration: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sources-link:hover {
+    text-decoration: underline;
+}
+
+.link-icon {
+    width: 12px;
+    height: 12px;
+    border: none;
+    background: #0090ff;
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: bold;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.sources-link:hover .link-icon {
+    background: #0070cc;
+}
