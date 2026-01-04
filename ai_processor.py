@@ -289,13 +289,37 @@ def process_message(message, bigquery_client, ai_model):
 
 
 def main():
-    """Main processing loop - process newest first, stop at 50 relevant."""
+    """Main processing loop - detect environment and run appropriate mode."""
     print("=== AI Processor for Immigration Policy Updates ===")
-    print("🎯 Mode: Newest first, stop at 50 relevant")
-    print("🤖 AI: Gemini 2.0 Flash (analyzing FULL articles)")
-    print("📊 Storage: BigQuery")
-    print("-" * 60)
     
+    # Detect environment
+    is_production = os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('VERCEL') or os.getenv('PORT') == '8080'
+    
+    if is_production:
+        print("🚀 PRODUCTION MODE: Railway/Cloud deployment")
+        print("📡 Mode: Continuous polling only (no backfill)")
+        print("🤖 AI: Gemini 2.0 Flash (RSS descriptions)")
+        print("📊 Storage: BigQuery")
+        print("-" * 60)
+        
+        # Skip backfill, go straight to continuous polling
+        bigquery_client = create_bigquery_client()
+        ai_model = setup_gemini_ai()
+        continuous_polling(bigquery_client, ai_model)
+        
+    else:
+        print("💻 LOCAL MODE: Development environment")
+        print("🎯 Mode: Backfill first, then continuous polling")
+        print("🤖 AI: Gemini 2.0 Flash (analyzing FULL articles)")
+        print("📊 Storage: BigQuery")
+        print("-" * 60)
+        
+        # Run full backfill process
+        run_backfill_process()
+
+
+def run_backfill_process():
+    """Run the backfill process (local development only)."""
     consumer = create_kafka_consumer()
     bigquery_client = create_bigquery_client()
     ai_model = setup_gemini_ai()
@@ -348,7 +372,6 @@ def main():
         for data in all_messages:
             if relevant_count >= target_count:
                 break
-            
             title = data.get('title', '')
             link = data.get('link', '')
             

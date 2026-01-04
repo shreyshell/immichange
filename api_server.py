@@ -325,8 +325,9 @@ async def health_check():
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8080))
-    print(f"🚀 Starting Immichange API server on http://localhost:{port}")
-    print(f"📊 Dashboard: http://localhost:{port}")
-    print(f"📋 API Docs: http://localhost:{port}/docs")
-    print(f"🔍 Health Check: http://localhost:{port}/api/health")
-    uvicorn.run(app, host="127.0.0.1", port=port)
+    host = "0.0.0.0" if os.getenv("RAILWAY_ENVIRONMENT") else "127.0.0.1"
+    print(f"🚀 Starting Immichange API server on http://{host}:{port}")
+    print(f"📊 Dashboard: http://{host}:{port}")
+    print(f"📋 API Docs: http://{host}:{port}/docs")
+    print(f"🔍 Health Check: http://{host}:{port}/api/health")
+    uvicorn.run(app, host=host, port=port)
