@@ -10,7 +10,7 @@ import os
 import time
 import requests
 import feedparser
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import mktime
 from confluent_kafka import Consumer, Producer, KafkaError
 from google.cloud import bigquery
@@ -109,10 +109,18 @@ def fetch_article_content(url):
         return None
 
 
-def analyze_with_ai(title, article_content, model):
-    """Analyze immigration policy update with full article content."""
+def analyze_with_ai(title, article_content, description, model):
+    """Analyze immigration policy update with full article content or description fallback."""
     
-    content_section = f'Article Content:\n"""\n{article_content}\n"""' if article_content else f'Title only (article not available): "{title}"'
+    if article_content:
+        content_section = f'Full Article Content:\n"""\n{article_content}\n"""'
+        analysis_note = "analyzing full article"
+    elif description:
+        content_section = f'RSS Description:\n"""\n{description}\n"""'
+        analysis_note = "analyzing RSS description"
+    else:
+        content_section = f'Title only: "{title}"'
+        analysis_note = "analyzing title only"
     
     prompt = f"""You are analyzing a USCIS immigration policy update FOR IMMIGRANTS. Your audience is immigrants and visa applicants who want to know how policy changes affect THEM.
 
@@ -153,7 +161,8 @@ Respond ONLY with valid JSON:
     "affected_groups": "The immigrant group affected (2 words max)",
     "severity": "High/Medium/Low",
     "summary": "2-3 sentences explaining what changed and what immigrants need to know or do",
-    "effective_date": "YYYY-MM-DD if mentioned, otherwise null"
+    "effective_date": "YYYY-MM-DD if mentioned, otherwise null",
+    "analysis_source": "{analysis_note}"
 }}
 
 CRITICAL: affected_groups must be the IMMIGRANT population affected (e.g., "H-1B Workers" not "Employers")."""
@@ -355,7 +364,7 @@ def main():
                 print(f"⚠️  Could not fetch article, using title only")
             
             # AI Analysis
-            ai_analysis = analyze_with_ai(title, article_content, ai_model)
+            ai_analysis = analyze_with_ai(title, article_content, data.get('description', ''), ai_model)
             
             processed_count += 1
             
@@ -420,9 +429,10 @@ def get_existing_links(bigquery_client):
 
 
 def continuous_polling(bigquery_client, ai_model):
-    """Continuous RSS polling mode - fetch new updates every 15 minutes."""
+    """Continuous RSS polling mode - fetch new updates every 6 hours, only last 24 hours."""
     print("📡 RSS URL: https://www.uscis.gov/news/rss-feed/59144")
-    print("⏰ Polling interval: 15 minutes")
+    print("⏰ Polling interval: 6 hours")
+    print("📅 Filter: Only entries published in last 24 hours")
     print("-" * 60)
     
     poll_count = 0
@@ -431,7 +441,10 @@ def continuous_polling(bigquery_client, ai_model):
     try:
         while True:
             poll_count += 1
-            print(f"\n📡 Poll #{poll_count} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            now = datetime.now()
+            cutoff_time = now - timedelta(hours=24)
+            print(f"\n📡 Poll #{poll_count} at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"📅 Looking for entries published after {cutoff_time.strftime('%Y-%m-%d %H:%M:%S')}")
             
             # Get existing links to avoid duplicates
             existing_links = get_existing_links(bigquery_client)
@@ -444,64 +457,81 @@ def continuous_polling(bigquery_client, ai_model):
             if not feed.entries:
                 print("❌ No entries in RSS feed")
             else:
-                print(f"📰 Found {len(feed.entries)} entries in RSS feed")
+                print(f"📰 Found {len(feed.entries)} total entries in RSS feed")
                 
-                new_count = 0
+                # Filter for last 24 hours
+                recent_entries = []
                 for entry in feed.entries:
-                    # Skip if already processed
-                    if entry.link in existing_links:
-                        continue
-                    
-                    # Parse published date
-                    published_at = None
                     if hasattr(entry, 'published_parsed') and entry.published_parsed:
-                        published_at = datetime.fromtimestamp(mktime(entry.published_parsed)).isoformat()
-                    
-                    # Create data record
-                    data = {
-                        'country': 'United States',
-                        'source': 'USCIS',
-                        'title': entry.title,
-                        'link': entry.link,
-                        'published_at': published_at,
-                        'ingested_at': datetime.utcnow().isoformat(),
-                    }
-                    
-                    print(f"\n🆕 New: {entry.title[:60]}...")
-                    
-                    # Fetch and analyze
-                    article_content = fetch_article_content(entry.link)
-                    if article_content:
-                        print(f"✅ Fetched {len(article_content)} chars")
-                    
-                    ai_analysis = analyze_with_ai(entry.title, article_content, ai_model)
-                    
-                    if not ai_analysis.get('relevant', False):
-                        print(f"⏭️  Skipped (not relevant)")
-                        continue
-                    
-                    # Merge and insert
-                    enriched_data = {**data, **ai_analysis}
-                    enriched_data['ai_processed'] = True
-                    
-                    try:
-                        insert_to_bigquery(bigquery_client, enriched_data)
-                        new_count += 1
-                        total_new += 1
-                        print(f"✅ Stored: {ai_analysis['visa_type']} | {ai_analysis['type_of_change']}")
-                    except Exception as e:
-                        print(f"❌ BigQuery error: {e}")
-                    
-                    time.sleep(0.3)
+                        entry_time = datetime.fromtimestamp(mktime(entry.published_parsed))
+                        if entry_time > cutoff_time:
+                            recent_entries.append(entry)
                 
-                if new_count > 0:
-                    print(f"\n🎉 Added {new_count} new updates this poll (Total new: {total_new})")
+                print(f"📅 Found {len(recent_entries)} entries published in last 24 hours")
+                
+                if not recent_entries:
+                    print("✅ No recent entries found")
                 else:
-                    print(f"✅ No new updates this poll")
+                    new_count = 0
+                    for entry in recent_entries:
+                        # Skip if already processed
+                        if entry.link in existing_links:
+                            continue
+                        
+                        # Parse published date
+                        published_at = None
+                        if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                            published_at = datetime.fromtimestamp(mktime(entry.published_parsed)).isoformat()
+                        
+                        # Get description from RSS
+                        description = getattr(entry, 'description', '') or getattr(entry, 'summary', '')
+                        
+                        # Create data record
+                        data = {
+                            'country': 'United States',
+                            'source': 'USCIS',
+                            'title': entry.title,
+                            'link': entry.link,
+                            'description': description,
+                            'published_at': published_at,
+                            'ingested_at': datetime.utcnow().isoformat(),
+                        }
+                        
+                        print(f"\n🆕 New (last 24h): {entry.title[:60]}...")
+                        
+                        # Fetch and analyze (will fall back to description on Railway)
+                        article_content = fetch_article_content(entry.link)
+                        if article_content:
+                            print(f"✅ Fetched {len(article_content)} chars")
+                        
+                        ai_analysis = analyze_with_ai(entry.title, article_content, description, ai_model)
+                        
+                        if not ai_analysis.get('relevant', False):
+                            print(f"⏭️  Skipped (not relevant)")
+                            continue
+                        
+                        # Merge and insert
+                        enriched_data = {**data, **ai_analysis}
+                        enriched_data['ai_processed'] = True
+                        
+                        try:
+                            insert_to_bigquery(bigquery_client, enriched_data)
+                            new_count += 1
+                            total_new += 1
+                            print(f"✅ Stored: {ai_analysis['visa_type']} | {ai_analysis['type_of_change']}")
+                        except Exception as e:
+                            print(f"❌ BigQuery error: {e}")
+                        
+                        time.sleep(0.3)
+                    
+                    if new_count > 0:
+                        print(f"\n🎉 Added {new_count} new updates from last 24h (Total new: {total_new})")
+                    else:
+                        print(f"✅ All recent entries already processed")
             
-            # Wait 15 minutes
-            print(f"\n⏰ Next poll in 15 minutes...")
-            time.sleep(900)
+            # Wait 6 hours
+            print(f"\n⏰ Next poll in 6 hours...")
+            time.sleep(21600)  # 6 hours = 21600 seconds
             
     except KeyboardInterrupt:
         print(f"\n\n⏹️  Polling stopped")
