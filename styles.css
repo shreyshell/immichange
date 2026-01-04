@@ -34,11 +34,11 @@ body {
 /* Dotted background pattern - covers everything below header */
 body::after {
     content: '';
-    position: absolute; /* Changed from fixed to absolute so it scrolls with content */
+    position: absolute; /* Changed from fixed so it scrolls with content */
     top: 88px; /* Start below the header divider */
     left: 0;
     right: 0;
-    height: 919px; /* Precise height: total page (1007px) - header area (88px) */
+    height: 922px; /* Extended to match homepage: 980px - 88px + 30px extension */
     background-image: 
         radial-gradient(circle, rgba(0, 55, 255, 0.15) 1.5px, transparent 1.5px);
     background-size: 20px 20px;
@@ -50,7 +50,7 @@ body::after {
 .homepage {
     position: relative;
     width: 100vw; /* Full viewport width */
-    height: 1007px; /* Precise height: dashboard end (967px) + 40px spacing */
+    height: 980px; /* Added 30px extension: 950px + 30px */
     z-index: 1; /* Above the dotted background */
 }
 
@@ -245,6 +245,37 @@ body::after {
     transform: translateX(-50%) translateY(-2px);
 }
 
+/* Explore Button Coming Soon Disclaimer - Static and always visible */
+.explore-coming-soon-disclaimer {
+    position: absolute;
+    left: calc(50% - 88.5px + 180px); /* Moved additional 50px to the right (130px + 50px = 180px) */
+    top: calc(370px - 20px); /* Moved 30px down (50px - 30px = 20px) */
+    width: auto; /* Let it size to content */
+    min-width: 80px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 4px 8px; /* Reduced padding */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    opacity: 1; /* Always visible */
+    visibility: visible; /* Always visible */
+    transform: translateX(-50%); /* Center horizontally on the position */
+}
+
+.explore-coming-soon-disclaimer div {
+    text-align: center;
+}
+
+.explore-coming-soon-disclaimer p {
+    margin: 0;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 500;
+    font-size: 10px; /* Smaller font */
+    color: #24315e;
+    line-height: 1.2;
+}
+
 /* Pulse animation for coming soon disclaimer */
 .coming-soon-disclaimer.pulse {
     animation: pulse 0.6s ease-in-out;
@@ -356,6 +387,162 @@ body::after {
     width: 18.5px;
     height: 10.967px;
     flex-shrink: 0;
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+    position: absolute;
+    left: 250px; /* Same as filter button */
+    top: 500px; /* Below filter button */
+    width: auto; /* Let the content determine the width */
+    max-height: 280px; /* Increased height to accommodate taller checkbox lists */
+    overflow-y: auto; /* Add scroll if content is too tall */
+    background: white;
+    border: 2px solid #0037ff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 55, 255, 0.15);
+    z-index: 20; /* Above everything */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    display: flex; /* Use flexbox for horizontal layout */
+    flex-direction: column; /* Stack sections and actions vertically */
+    gap: 15px; /* Space between rows */
+}
+
+.filter-sections-row {
+    display: flex;
+    flex-wrap: nowrap; /* Prevent wrapping - keep all on one row */
+    gap: 15px; /* Space between sections */
+}
+
+.filter-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.filter-section {
+    flex: 1; /* Each section takes equal width */
+    min-width: 200px; /* Increased minimum width for better fit */
+    max-width: 220px; /* Set max width to prevent sections from getting too wide */
+    margin-bottom: 0; /* Remove bottom margin since we're horizontal */
+}
+
+.filter-section:first-child {
+    /* Country section - 25% smaller */
+    flex: 0.75;
+    min-width: 150px;
+    max-width: 165px;
+}
+
+.filter-section label {
+    display: block;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: #24315e;
+    margin-bottom: 4px;
+}
+
+.filter-select {
+    width: 100%;
+    height: 32px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 0 8px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    color: #24315e;
+    background: white;
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #0037ff;
+    box-shadow: 0 0 0 2px rgba(0, 55, 255, 0.1);
+}
+
+.checkbox-list {
+    max-height: 150px; /* Increased from 80px to show more options */
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+    background: white;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+    margin-bottom: 4px;
+}
+
+.checkbox-item:last-child {
+    margin-bottom: 0;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+    accent-color: #0037ff;
+}
+
+.checkbox-item label {
+    cursor: pointer;
+    font-weight: normal;
+    margin: 0;
+    flex: 1;
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    color: #24315e;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 0; /* Remove top margin since we have gap from parent */
+    padding-top: 12px;
+    border-top: 1px solid #e5e5e5;
+    width: 100%; /* Full width across all sections */
+    justify-content: center; /* Center the buttons */
+}
+
+.apply-filters-btn, .clear-filters-btn {
+    flex: 1;
+    height: 32px;
+    border-radius: 6px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.apply-filters-btn {
+    background: #0037ff;
+    border: 1px solid #0037ff;
+    color: white;
+}
+
+.apply-filters-btn:hover {
+    background: #0029cc;
+    border-color: #0029cc;
+}
+
+.clear-filters-btn {
+    background: white;
+    border: 1px solid #ccc;
+    color: #666;
+}
+
+.clear-filters-btn:hover {
+    background: #f5f5f5;
+    border-color: #999;
 }
 
 /* 300 recorded updates text */
@@ -511,41 +698,41 @@ body::after {
     white-space: nowrap;
 }
 
-/* Fixed positions for each column title - 30px spacing between columns */
+/* Fixed positions for each column title - 20px spacing between columns */
 .country-title { 
     left: 0px; 
-    width: 67px; 
+    width: 87px; /* Increased by 20px (was 67px) */
 }
 .visa-type-title { 
-    left: 97px; /* 67px + 30px spacing */
-    width: 100px; /* Increased from 72px to 100px */
+    left: 107px; /* 87px + 20px spacing */
+    width: 180px; /* Increased significantly from 100px */
 }
 .change-type-title { 
-    left: 227px; /* 97px + 100px + 30px spacing */
-    width: 108px; 
+    left: 307px; /* 107px + 180px + 20px spacing */
+    width: 180px; /* Increased significantly from 108px */
 }
 .affected-groups-title { 
-    left: 365px; /* 227px + 108px + 30px spacing */
-    width: 140px; /* Increased from 112px to 140px */
+    left: 507px; /* 307px + 180px + 20px spacing */
+    width: 180px; /* Increased from 140px */
 }
 .severity-title { 
-    left: 535px; /* 365px + 140px + 30px spacing */
+    left: 707px; /* 507px + 180px + 20px spacing */
     width: 66px; 
 }
 .summary-title { 
-    left: 631px; /* 535px + 66px + 30px spacing */
-    width: 200px; 
+    left: 793px; /* 707px + 66px + 20px spacing */
+    width: 100px; /* Reduced from 200px */
 }
 .sources-title { 
-    left: 861px; /* 631px + 200px + 30px spacing */
-    width: 120px; 
+    left: 913px; /* 793px + 100px + 20px spacing */
+    width: 60px; /* Reduced from 120px */
 }
 .timestamp-title { 
-    left: 1011px; /* 861px + 120px + 30px spacing */
+    left: 993px; /* 913px + 60px + 20px spacing */
     width: 130px; 
 }
 .effective-date-title { 
-    left: 1171px; /* 1011px + 130px + 30px spacing */
+    left: 1143px; /* 993px + 130px + 20px spacing */
     width: 150px; 
 }
 
@@ -592,42 +779,42 @@ body::after {
     white-space: nowrap;
 }
 
-/* Fixed positions for each data cell - matching column title positions exactly */
+/* Fixed positions for each data cell - matching column title positions exactly with 20px spacing */
 .data-cell.country { 
     left: 0px; 
-    width: 67px; 
+    width: 87px; /* Increased by 20px (was 67px) */
 }
 .data-cell.visa-type { 
-    left: 97px; /* 67px + 30px spacing */
-    width: 100px; /* Increased from 72px to 100px */
+    left: 107px; /* 87px + 20px spacing */
+    width: 180px; /* Increased to match column title */
 }
 .data-cell.change-type { 
-    left: 227px; /* 97px + 100px + 30px spacing */
-    width: 108px; 
+    left: 307px; /* 107px + 180px + 20px spacing */
+    width: 180px; /* Increased to match column title */
 }
 .data-cell.affected-groups { 
-    left: 365px; /* 227px + 108px + 30px spacing */
-    width: 140px; /* Increased from 112px to 140px */
+    left: 507px; /* 307px + 180px + 20px spacing */
+    width: 180px; /* Increased to match column title */
 }
 .data-cell.severity { 
-    left: 535px; /* 365px + 140px + 30px spacing */
+    left: 707px; /* 507px + 180px + 20px spacing */
     width: 66px; 
 }
 .data-cell.summary { 
-    left: 631px; /* 535px + 66px + 30px spacing */
-    width: 200px; /* Increased from 150px to 200px */
+    left: 793px; /* 707px + 66px + 20px spacing */
+    width: 100px; /* Updated to match new width */
 }
 .data-cell.sources { 
-    left: 861px; /* 631px + 200px + 30px spacing */
-    width: 120px; /* Increased from 100px to 120px */
+    left: 913px; /* 793px + 100px + 20px spacing */
+    width: 60px; 
 }
 .data-cell.timestamp { 
-    left: 1011px; /* 861px + 120px + 30px spacing */
-    width: 130px; /* Increased from 96px to 130px */
+    left: 993px; /* 913px + 60px + 20px spacing */
+    width: 130px; 
 }
 .data-cell.effective-date { 
-    left: 1171px; /* 1011px + 130px + 30px spacing */
-    width: 150px; /* Keep at 150px */
+    left: 1143px; /* 993px + 130px + 20px spacing */
+    width: 150px; 
 }
 
 /* Severity Tags - matching Figma design */
@@ -684,7 +871,7 @@ body::after {
 
 /* Summary cell - truncate long text */
 .data-cell.summary {
-    max-width: 200px;
+    max-width: 100px; /* Updated to match new width */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

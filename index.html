@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=8">
+    <script src="/static/script.js?v=5" defer></script>
 </head>
 <body>
     <div class="homepage">
@@ -82,8 +82,8 @@
                 Launch Path Explorer
             </button>
 
-            <!-- Coming Soon Disclaimer - Always visible -->
-            <div class="coming-soon-disclaimer" id="comingSoonDisclaimer">
+            <!-- Coming Soon Disclaimer - Static and always visible -->
+            <div class="explore-coming-soon-disclaimer" id="exploreComingSoonDisclaimer">
                 <div>
                     <p>🚧 🛠️ Feature</p>
                     <p>Coming Soon!</p>
@@ -110,11 +110,47 @@
             Filter
         </button>
 
-        <!-- 300 recorded updates text -->
-        <p class="recorded-updates-text">300 recorded updates</p>
+        <!-- Filter Dropdown Panel -->
+        <div class="filter-dropdown" id="filterDropdown">
+            <div class="filter-sections-row">
+                <div class="filter-section">
+                    <label>Country:</label>
+                    <div class="checkbox-list" id="countryFilter">
+                        <!-- Checkboxes will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="filter-section">
+                    <label>Visa Type:</label>
+                    <div class="checkbox-list" id="visaTypeFilter">
+                        <!-- Checkboxes will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="filter-section">
+                    <label>Affected Groups:</label>
+                    <div class="checkbox-list" id="affectedGroupsFilter">
+                        <!-- Checkboxes will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="filter-section">
+                    <label>Type of Change:</label>
+                    <div class="checkbox-list" id="changeTypeFilter">
+                        <!-- Checkboxes will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="apply-filters-btn" id="applyFiltersBtn">Apply Filters</button>
+                <button class="clear-filters-btn" id="clearFiltersBtn">Clear All</button>
+            </div>
+        </div>
 
-        <!-- of 30 pages text -->
-        <p class="pages-text">of 30 pages</p>
+
+
+        <!-- Recorded updates text (populated by JavaScript) -->
+        <p class="recorded-updates-text" style="display: none;"></p>
+
+        <!-- Pages text (populated by JavaScript) -->
+        <p class="pages-text" style="display: none;"></p>
 
         <!-- # of Updates This Week Badge -->
         <div class="updates-this-week-badge" id="updatesThisWeekBadge">
@@ -166,7 +202,7 @@
         <!-- Data Rows Container -->
         <div class="data-rows" id="dataRows">
             <!-- Loading state -->
-            <div class="loading-state" id="loadingState">
+            <div class="loading-state" id="loadingState" style="display: block;">
                 <p>Loading immigration policy updates...</p>
             </div>
         </div>

@@ -1,7 +1,9 @@
-feedparser==6.0.10
-confluent-kafka==2.3.0
-python-dotenv==1.0.0
-google-cloud-bigquery==3.13.0
-google-cloud-aiplatform==1.38.1
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
+python-dotenv==1.0.0
+google-cloud-bigquery==3.13.0
+google-generativeai==0.3.2
+confluent-kafka==2.3.0
+feedparser==6.0.10
+requests==2.31.0
+beautifulsoup4==4.12.2

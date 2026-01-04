@@ -5,12 +5,12 @@ A complete data pipeline that fetches USCIS immigration updates, processes them 
 ## Architecture
 
 ```
-RSS Feed → Kafka Producer → Kafka Topic → Kafka Consumer + Vertex AI → BigQuery → REST API
+RSS Feed → Kafka Producer → Kafka Topic → Kafka Consumer + Google Generative AI → BigQuery → REST API
 ```
 
 ## New AI Integration
 
-The system now uses **Google Vertex AI (Gemini)** to automatically analyze each USCIS update and extract:
+The system now uses **Google Generative AI (Gemini)** to automatically analyze each USCIS update and extract:
 
 - **visa_type**: Type of visa affected (H-1B, Green Card, Asylum, etc.)
 - **type_of_change**: Nature of change (Policy Update, Fee Change, etc.)
@@ -27,7 +27,7 @@ The system now uses **Google Vertex AI (Gemini)** to automatically analyze each 
 
 ### 2. AI-Enhanced Kafka Consumer (`kafka_bigquery_consumer.py`)
 - Background process consuming from Kafka topic `immigration.raw_updates`
-- **NEW**: Calls Vertex AI to analyze each update before storage
+- **NEW**: Calls Google Generative AI to analyze each update before storage
 - Extracts structured information (visa type, severity, summary, etc.)
 - Merges AI-generated fields with original message
 - Inserts enriched data into BigQuery table `Immichange.policy_events`
@@ -44,8 +44,8 @@ The system now uses **Google Vertex AI (Gemini)** to automatically analyze each 
 - Python 3.9+
 - Confluent Cloud Kafka cluster
 - Google Cloud BigQuery dataset
-- **NEW**: Google Cloud Vertex AI API enabled
-- Service account with BigQuery and Vertex AI permissions
+- **NEW**: Google Generative AI API key
+- Service account with BigQuery permissions
 
 ### Installation
 ```bash
@@ -61,17 +61,19 @@ KAFKA_API_KEY=your-api-key
 KAFKA_API_SECRET=your-api-secret
 KAFKA_TOPIC=immigration.raw_updates
 
-# Google Cloud Configuration
+# Google Cloud Configuration (for BigQuery)
 GOOGLE_CLOUD_PROJECT=your-project-id
 GOOGLE_APPLICATION_CREDENTIALS=google-credentials.json
-VERTEX_AI_LOCATION=us-central1
+
+# Google Generative AI Configuration
+GOOGLE_API_KEY=your-google-api-key
 ```
 
 ## Usage
 
 ### 1. Test AI Integration (Optional)
 ```bash
-python3 test_vertex_ai.py
+python3 test_generative_ai.py
 ```
 
 ### 2. Start the Consumer (Background Process)
@@ -145,7 +147,7 @@ Each policy event now contains:
 
 ✅ **RSS Publisher**: Working - fetches and publishes to Kafka
 ✅ **AI-Enhanced Kafka Consumer**: Working - AI analysis + BigQuery storage
-✅ **Vertex AI Integration**: Working - automatic categorization and summarization
+✅ **Google Generative AI Integration**: Working - automatic categorization and summarization
 ✅ **REST API**: Working - serving enriched policy data via HTTP endpoints
 ⚠️ **BigQuery Queries**: Limited by service account permissions
 
@@ -163,7 +165,7 @@ The data pipeline is fully operational with AI enhancement. Each USCIS update is
 - `immigration_rss_reader.py` - RSS to Kafka publisher
 - `kafka_bigquery_consumer.py` - **Enhanced** Kafka to BigQuery consumer with AI
 - `api_server.py` - **Enhanced** FastAPI REST API server with AI fields
-- `test_vertex_ai.py` - **NEW** Test script for AI integration
-- `requirements.txt` - Python dependencies (includes Vertex AI)
+- `test_generative_ai.py` - **NEW** Test script for AI integration
+- `requirements.txt` - Python dependencies (includes Google Generative AI)
 - `.env` - Environment variables (not in git)
 - `google-credentials.json` - Service account key (not in git)

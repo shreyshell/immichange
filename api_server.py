@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 FastAPI backend for immigration policy events.
-Provides REST API endpoints to query BigQuery data.
+Provides REST API endpoints to query BigQuery data and serves the web dashboard.
 """
 
 import os
@@ -9,6 +9,8 @@ from datetime import datetime
 from typing import List, Dict, Any
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from google.cloud import bigquery
 from google.oauth2 import service_account
 from dotenv import load_dotenv
@@ -32,19 +34,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve static files (CSS, JS, images)
+app.mount("/static", StaticFiles(directory="."), name="static")
+
+@app.get("/")
+async def serve_dashboard():
+    """Serve the main dashboard."""
+    return FileResponse("index.html")
+
+@app.get("/index.html")
+async def serve_dashboard_alt():
+    """Alternative route for the dashboard."""
+    return FileResponse("index.html")
+
 def create_bigquery_client():
-    """Create and configure BigQuery client."""
-    credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+    """Create BigQuery client using the same approach as AI processor."""
+    import json
+    
     project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
     
     if not project_id:
         raise ValueError("Missing required environment variable: GOOGLE_CLOUD_PROJECT")
     
-    if credentials_path and os.path.exists(credentials_path):
-        credentials = service_account.Credentials.from_service_account_file(credentials_path)
+    # Try to get credentials from environment variable first (for Railway/Vercel)
+    credentials_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+    if credentials_json:
+        credentials_info = json.loads(credentials_json)
+        credentials = service_account.Credentials.from_service_account_info(credentials_info)
         client = bigquery.Client(credentials=credentials, project=project_id)
     else:
-        client = bigquery.Client(project=project_id)
+        # Fallback to file-based credentials (for local development)
+        credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', 'google-credentials.json')
+        if credentials_path and os.path.exists(credentials_path):
+            credentials = service_account.Credentials.from_service_account_file(credentials_path)
+            client = bigquery.Client(credentials=credentials, project=project_id)
+        else:
+            # Use default credentials
+            client = bigquery.Client(project=project_id)
     
     return client
 
@@ -108,9 +134,20 @@ async def root():
     }
 
 @app.get("/api/history")
-async def get_policy_history():
+async def get_policy_history(
+    country: str = None,
+    visa_type: str = None,
+    affected_groups: str = None,
+    type_of_change: str = None
+):
     """
-    Get the most recent 50 immigration policy events from BigQuery.
+    Get the most recent 50 immigration policy events from BigQuery with optional filtering.
+    
+    Query Parameters:
+        country: Filter by country name
+        visa_type: Filter by visa type
+        affected_groups: Filter by affected groups
+        type_of_change: Filter by type of change
     
     Returns:
         List of policy events with AI-generated fields including visa_type, 
@@ -120,7 +157,29 @@ async def get_policy_history():
         client = create_bigquery_client()
         project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
         
-        # SQL query to get recent policy events with AI-generated fields
+        # Build WHERE clause for filtering with proper parameterization
+        where_conditions = []
+        query_params = {}
+        
+        if country:
+            where_conditions.append("country = @country")
+            query_params['country'] = country
+        if visa_type:
+            where_conditions.append("visa_type = @visa_type")
+            query_params['visa_type'] = visa_type
+        if affected_groups:
+            where_conditions.append("affected_groups = @affected_groups")
+            query_params['affected_groups'] = affected_groups
+        if type_of_change:
+            where_conditions.append("type_of_change = @type_of_change")
+            query_params['type_of_change'] = type_of_change
+        
+        where_clause = ""
+        if where_conditions:
+            where_clause = "WHERE " + " AND ".join(where_conditions)
+        
+        # SQL query to get recent policy events with AI-generated fields and optional filtering
+        # Only include relevant records (relevant = true or relevant IS NULL for backward compatibility)
         query = f"""
         SELECT 
             country,
@@ -129,19 +188,27 @@ async def get_policy_history():
             link,
             published_at,
             ingested_at,
+            relevant,
             visa_type,
             type_of_change,
             affected_groups,
             severity,
             summary,
+            effective_date,
             ai_processed
         FROM `{project_id}.Immichange.policy_events`
+        WHERE (relevant = true OR relevant IS NULL)  -- Only show relevant updates
+        {where_clause}
         ORDER BY published_at DESC
         LIMIT 50
         """
         
-        # Execute query
-        query_job = client.query(query)
+        # Execute query with parameters
+        job_config = bigquery.QueryJobConfig(query_parameters=[
+            bigquery.ScalarQueryParameter(name, "STRING", value)
+            for name, value in query_params.items()
+        ])
+        query_job = client.query(query, job_config=job_config)
         results = query_job.result()
         
         # Convert results to list of dictionaries
@@ -155,8 +222,8 @@ async def get_policy_history():
                 "severity": row.severity or "Medium",  # Fallback if AI failed
                 "summary": row.summary or row.title,  # Use AI summary or fallback to title
                 "source": row.link,  # URL as requested
-                "timestamp": row.published_at.isoformat() if row.published_at else None,
-                "effective_date": row.published_at.isoformat() if row.published_at else None,  # Equal to published_at as requested
+                "timestamp": (row.published_at or row.ingested_at).isoformat() if (row.published_at or row.ingested_at) else None,
+                "effective_date": row.effective_date.isoformat() if row.effective_date else None,  # Use AI-calculated effective_date or None if not available
                 # Keep original fields for backward compatibility
                 "title": row.title,
                 "link": row.link,
@@ -169,7 +236,13 @@ async def get_policy_history():
         return {
             "success": True,
             "count": len(events),
-            "data": events
+            "data": events,
+            "filters_applied": {
+                "country": country,
+                "visa_type": visa_type,
+                "affected_groups": affected_groups,
+                "type_of_change": type_of_change
+            }
         }
         
     except Exception as e:
@@ -189,7 +262,7 @@ async def get_policy_history():
                 "summary": "New rule bars asylum for individuals who pose security threats and public health risks to the United States.",
                 "source": sample_url,
                 "timestamp": sample_published,
-                "effective_date": sample_published,
+                "effective_date": None,  # No specific effective date for this announcement
                 # Keep original fields for backward compatibility
                 "title": sample_title,
                 "link": sample_url,
@@ -199,10 +272,27 @@ async def get_policy_history():
             }
         ]
         
+        # Apply client-side filtering to sample data if needed
+        filtered_events = sample_events
+        if country:
+            filtered_events = [e for e in filtered_events if e["country"] == country]
+        if visa_type:
+            filtered_events = [e for e in filtered_events if e["visa_type"] == visa_type]
+        if affected_groups:
+            filtered_events = [e for e in filtered_events if e["affected_groups"] == affected_groups]
+        if type_of_change:
+            filtered_events = [e for e in filtered_events if e["type_of_change"] == type_of_change]
+        
         return {
             "success": True,
-            "count": len(sample_events),
-            "data": sample_events,
+            "count": len(filtered_events),
+            "data": filtered_events,
+            "filters_applied": {
+                "country": country,
+                "visa_type": visa_type,
+                "affected_groups": affected_groups,
+                "type_of_change": type_of_change
+            },
             "note": "Fallback data - BigQuery permissions needed"
         }
 
@@ -234,5 +324,9 @@ async def health_check():
         )
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    port = int(os.getenv("PORT", 8080))
+    print(f"🚀 Starting Immichange API server on http://localhost:{port}")
+    print(f"📊 Dashboard: http://localhost:{port}")
+    print(f"📋 API Docs: http://localhost:{port}/docs")
+    print(f"🔍 Health Check: http://localhost:{port}/api/health")
+    uvicorn.run(app, host="127.0.0.1", port=port)

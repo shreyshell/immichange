@@ -1,29 +1,244 @@
+// Test function to verify JavaScript is loading
+console.log('Script.js is loading...');
+
+// Simple test function
+function testFilterButton() {
+    console.log('Testing filter button...');
+    const filterButton = document.getElementById('filterButton');
+    const filterDropdown = document.getElementById('filterDropdown');
+    
+    console.log('filterButton found:', !!filterButton);
+    console.log('filterDropdown found:', !!filterDropdown);
+    
+    if (filterButton) {
+        console.log('Filter button element:', filterButton);
+        console.log('Filter button classes:', filterButton.className);
+        console.log('Filter button style:', filterButton.style.cssText);
+    }
+    
+    if (filterDropdown) {
+        console.log('Filter dropdown element:', filterDropdown);
+        console.log('Filter dropdown classes:', filterDropdown.className);
+        console.log('Filter dropdown style:', filterDropdown.style.cssText);
+    }
+}
+
 // Country Selection Section Interactions
 document.addEventListener('DOMContentLoaded', function() {
-    // Explore button hover effect
-    const exploreButton = document.getElementById('exploreButton');
-    const comingSoonDisclaimer = document.getElementById('comingSoonDisclaimer');
+    console.log('DOM Content Loaded');
+    console.log('Testing element access:');
+    console.log('dataRows:', document.getElementById('dataRows'));
+    console.log('loadingState:', document.getElementById('loadingState'));
+    console.log('All elements with loadingState class:', document.getElementsByClassName('loading-state'));
     
-    if (exploreButton && comingSoonDisclaimer) {
-        exploreButton.addEventListener('mouseenter', () => {
-            comingSoonDisclaimer.classList.add('pulse');
-            setTimeout(() => {
-                comingSoonDisclaimer.classList.remove('pulse');
-            }, 600); // Match the animation duration
-        });
-    }
-
     // Load dashboard data and setup pagination
+    console.log('About to call loadDashboardData');
     loadDashboardData();
     
-    // Setup pagination event listeners after a short delay to ensure elements are rendered
+    // Setup all event listeners after a short delay to ensure elements are rendered
     setTimeout(() => {
+        testFilterButton(); // Add test function call
+        setupFilterSystem();
         setupPaginationEventListeners();
         setupModalEventListeners();
     }, 100);
 });
 
-// Country flag mapping
+// Filter system state
+let filterState = {
+    country: [],
+    visaType: [],
+    affectedGroups: [],
+    changeType: []
+};
+
+let allEventsData = []; // Store all events for filtering
+
+// Setup filter system
+function setupFilterSystem() {
+    console.log('Setting up filter system...');
+    
+    const filterButton = document.getElementById('filterButton');
+    const filterDropdown = document.getElementById('filterDropdown');
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    
+    console.log('Filter elements found:');
+    console.log('filterButton:', !!filterButton);
+    console.log('filterDropdown:', !!filterDropdown);
+    console.log('applyFiltersBtn:', !!applyFiltersBtn);
+    console.log('clearFiltersBtn:', !!clearFiltersBtn);
+    
+    // Toggle filter dropdown
+    if (filterButton && filterDropdown) {
+        console.log('Adding click listener to filter button');
+        filterButton.addEventListener('click', (e) => {
+            console.log('Filter button clicked!');
+            e.stopPropagation();
+            const isActive = filterDropdown.classList.contains('active');
+            if (isActive) {
+                filterDropdown.classList.remove('active');
+                console.log('Filter dropdown hidden');
+            } else {
+                filterDropdown.classList.add('active');
+                console.log('Filter dropdown shown');
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!filterDropdown.contains(e.target) && !filterButton.contains(e.target)) {
+                filterDropdown.classList.remove('active');
+                console.log('Filter dropdown closed by outside click');
+            }
+        });
+    } else {
+        console.error('Filter button or dropdown not found!');
+    }
+    
+    // Apply filters
+    if (applyFiltersBtn) {
+        console.log('Adding click listener to apply filters button');
+        applyFiltersBtn.addEventListener('click', applyFilters);
+    } else {
+        console.error('Apply filters button not found!');
+    }
+    
+    // Clear filters
+    if (clearFiltersBtn) {
+        console.log('Adding click listener to clear filters button');
+        clearFiltersBtn.addEventListener('click', clearFilters);
+    } else {
+        console.error('Clear filters button not found!');
+    }
+}
+
+// Populate filter dropdowns with unique values from data
+function populateFilterDropdowns(events) {
+    const countries = [...new Set(events.map(e => e.country))].sort();
+    const visaTypes = [...new Set(events.map(e => e.visa_type))].sort();
+    const affectedGroups = [...new Set(events.map(e => e.affected_groups))].sort();
+    const changeTypes = [...new Set(events.map(e => e.type_of_change))].sort();
+    
+    populateCheckboxList('countryFilter', countries);
+    populateCheckboxList('visaTypeFilter', visaTypes);
+    populateCheckboxList('affectedGroupsFilter', affectedGroups);
+    populateCheckboxList('changeTypeFilter', changeTypes);
+}
+
+// Helper function to populate a checkbox list
+function populateCheckboxList(containerId, options) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    options.forEach(option => {
+        const checkboxItem = document.createElement('div');
+        checkboxItem.className = 'checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `${containerId}_${option.replace(/\s+/g, '_')}`;
+        checkbox.value = option;
+        
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = option;
+        
+        checkboxItem.appendChild(checkbox);
+        checkboxItem.appendChild(label);
+        container.appendChild(checkboxItem);
+    });
+}
+
+// Helper function to get selected checkbox values
+function getSelectedCheckboxValues(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    
+    const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Apply filters to the data
+function applyFilters() {
+    // Get current filter values from checkboxes
+    filterState.country = getSelectedCheckboxValues('countryFilter');
+    filterState.visaType = getSelectedCheckboxValues('visaTypeFilter');
+    filterState.affectedGroups = getSelectedCheckboxValues('affectedGroupsFilter');
+    filterState.changeType = getSelectedCheckboxValues('changeTypeFilter');
+    
+    // Filter the data
+    let filteredEvents = allEventsData.filter(event => {
+        return (filterState.country.length === 0 || filterState.country.includes(event.country)) &&
+               (filterState.visaType.length === 0 || filterState.visaType.includes(event.visa_type)) &&
+               (filterState.affectedGroups.length === 0 || filterState.affectedGroups.includes(event.affected_groups)) &&
+               (filterState.changeType.length === 0 || filterState.changeType.includes(event.type_of_change));
+    });
+    
+    // Update the display with filtered data
+    displayFilteredData(filteredEvents);
+    
+    // Close the dropdown
+    document.getElementById('filterDropdown')?.classList.remove('active');
+    
+    console.log(`Applied filters: ${Object.values(filterState).filter(arr => arr.length > 0).length} active filters, ${filteredEvents.length} results`);
+}
+
+// Clear all filters
+function clearFilters() {
+    // Reset filter state
+    filterState = {
+        country: [],
+        visaType: [],
+        affectedGroups: [],
+        changeType: []
+    };
+    
+    // Uncheck all checkboxes
+    const allCheckboxes = document.querySelectorAll('.checkbox-list input[type="checkbox"]');
+    allCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Display all data
+    displayFilteredData(allEventsData);
+    
+    // Close the dropdown
+    document.getElementById('filterDropdown')?.classList.remove('active');
+    
+    console.log('Cleared all filters');
+}
+
+// Display filtered data
+function displayFilteredData(events) {
+    const dataRowsContainer = document.getElementById('dataRows');
+    if (!dataRowsContainer) return;
+    
+    if (events.length === 0) {
+        dataRowsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">No results match the selected filters.</div>';
+        updatePaginationInfo(0);
+        updateWeeklyBadge(0);
+        return;
+    }
+    
+    // Update pagination info
+    const paginationInfo = updatePaginationInfo(events.length);
+    
+    // Calculate pagination for current page
+    const startIndex = (currentPaginationState.currentPage - 1) * paginationInfo.recordsPerPage;
+    const endIndex = startIndex + paginationInfo.recordsPerPage;
+    const pageData = events.slice(startIndex, endIndex);
+    
+    // Calculate weekly updates from filtered data
+    const weeklyCount = calculateUpdatesThisWeek(events);
+    updateWeeklyBadge(weeklyCount);
+    
+    // Create data rows
+    const rowsHTML = pageData.map(event => createDataRow(event)).join('');
+    dataRowsContainer.innerHTML = rowsHTML;
+}
 const countryFlags = {
     'United States': '🇺🇸',
     'USA': '🇺🇸',
@@ -47,9 +262,16 @@ const countryFlags = {
     'Switzerland': '🇨🇭'
 };
 
-// Get country flag
+// Get country flag and display name
 function getCountryFlag(country) {
     return countryFlags[country] || '🌍'; // Default globe emoji if country not found
+}
+
+function getCountryDisplayName(country) {
+    if (country === 'United States') {
+        return 'US';
+    }
+    return country;
 }
 
 // Format timestamp to match Figma design (M/D/YYYY, H:MM AM/PM)
@@ -85,16 +307,11 @@ function formatEffectiveDate(isoString) {
     return `${month} ${day}, ${year}`;
 }
 
-// Get severity level (randomize for demo since API doesn't provide this)
-function getSeverityLevel() {
-    const severities = ['high', 'medium', 'low'];
-    return severities[Math.floor(Math.random() * severities.length)];
-}
-
 // Create data row HTML
 function createDataRow(event) {
     const flag = getCountryFlag(event.country);
-    const severity = getSeverityLevel();
+    const countryDisplay = getCountryDisplayName(event.country);
+    const severity = event.severity ? event.severity.toLowerCase() : 'medium'; // Use API severity data
     const timestamp = formatTimestamp(event.timestamp);
     const effectiveDate = formatEffectiveDate(event.effective_date);
     
@@ -103,7 +320,7 @@ function createDataRow(event) {
     
     return `
         <div class="data-row">
-            <div class="data-cell country">${flag} ${event.country}</div>
+            <div class="data-cell country">${flag} ${countryDisplay}</div>
             <div class="data-cell visa-type">${event.visa_type}</div>
             <div class="data-cell change-type">${event.type_of_change}</div>
             <div class="data-cell affected-groups">${event.affected_groups}</div>
@@ -115,10 +332,7 @@ function createDataRow(event) {
                 <button class="expand-summary-btn" onclick="openSummaryModal('${rowId}', ${JSON.stringify(event).replace(/"/g, '&quot;')})">+</button>
             </div>
             <div class="data-cell sources">
-                <a href="${event.source}" target="_blank" class="sources-link">
-                    <span class="link-icon">🔗</span>
-                    Read more
-                </a>
+                <a href="${event.source}" target="_blank" class="sources-link">Link</a>
             </div>
             <div class="data-cell timestamp">
                 <div class="timestamp-tag">${timestamp}</div>
@@ -221,14 +435,16 @@ function updatePaginationInfo(totalRecords) {
     
     // Update "X recorded updates" text
     const recordedUpdatesElement = document.querySelector('.recorded-updates-text');
-    if (recordedUpdatesElement) {
+    if (recordedUpdatesElement && totalRecords > 0) {
         recordedUpdatesElement.textContent = `${totalRecords} recorded updates`;
+        recordedUpdatesElement.style.display = 'block';
     }
     
     // Update "of X pages" text
     const pagesTextElement = document.querySelector('.pages-text');
-    if (pagesTextElement) {
+    if (pagesTextElement && totalRecords > 0) {
         pagesTextElement.textContent = `of ${totalPages} pages`;
+        pagesTextElement.style.display = 'block';
     }
     
     // Update page number in pagination controls
@@ -285,15 +501,23 @@ function navigateToPage(pageNumber) {
 
 // Navigate to previous page
 function navigateToPreviousPage() {
+    console.log('Previous page clicked. Current page:', currentPaginationState.currentPage, 'Total pages:', currentPaginationState.totalPages);
     if (currentPaginationState.currentPage > 1) {
+        console.log('Navigating to page:', currentPaginationState.currentPage - 1);
         navigateToPage(currentPaginationState.currentPage - 1);
+    } else {
+        console.log('Already on first page');
     }
 }
 
 // Navigate to next page
 function navigateToNextPage() {
+    console.log('Next page clicked. Current page:', currentPaginationState.currentPage, 'Total pages:', currentPaginationState.totalPages);
     if (currentPaginationState.currentPage < currentPaginationState.totalPages) {
+        console.log('Navigating to page:', currentPaginationState.currentPage + 1);
         navigateToPage(currentPaginationState.currentPage + 1);
+    } else {
+        console.log('Already on last page');
     }
 }
 
@@ -302,12 +526,16 @@ function setupPaginationEventListeners() {
     const leftArrow = document.querySelector('.left-arrow');
     const rightArrow = document.querySelector('.right-arrow');
     
+    console.log('Setting up pagination listeners. Left arrow:', leftArrow, 'Right arrow:', rightArrow);
+    
     if (leftArrow) {
         leftArrow.addEventListener('click', navigateToPreviousPage);
+        console.log('Added click listener to left arrow');
     }
     
     if (rightArrow) {
         rightArrow.addEventListener('click', navigateToNextPage);
+        console.log('Added click listener to right arrow');
     }
 }
 
@@ -331,23 +559,66 @@ function calculateUpdatesThisWeek(events) {
 
 // Update the weekly updates badge
 function updateWeeklyBadge(count) {
+    console.log(`updateWeeklyBadge called with count: ${count}`); // Debug log
+    
     const badgeElement = document.getElementById('updatesThisWeekCount');
+    const badgeTextElement = document.querySelector('#updatesThisWeekBadge .badge-text');
+    
+    console.log('Badge element:', badgeElement); // Debug log
+    console.log('Badge text element:', badgeTextElement); // Debug log
+    
     if (badgeElement) {
         badgeElement.textContent = count;
+        console.log(`Set badge number to: ${count}`); // Debug log
+    }
+    
+    if (badgeTextElement) {
+        // Use singular "Update" for 1, plural "Updates" for everything else
+        const updateText = count === 1 ? 'Update this week' : 'Updates this week';
+        badgeTextElement.textContent = updateText;
+        console.log(`Set badge text to: "${updateText}"`); // Debug log
+    } else {
+        console.log('Badge text element not found!'); // Debug log
     }
 }
 
 // Load dashboard data from API
 async function loadDashboardData(page = 1) {
+    console.log('loadDashboardData called with page:', page);
+    
+    // Wait a bit to ensure DOM is ready
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     const dataRowsContainer = document.getElementById('dataRows');
     const loadingState = document.getElementById('loadingState');
     
+    console.log('dataRowsContainer:', dataRowsContainer);
+    console.log('loadingState:', loadingState);
+    
+    // Check if elements exist
+    if (!dataRowsContainer) {
+        console.error('dataRows element not found');
+        return;
+    }
+    
+    if (!loadingState) {
+        console.error('loadingState element not found');
+        // Try to create a simple loading indicator
+        dataRowsContainer.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+    }
+    
     try {
-        // Show loading state
-        loadingState.style.display = 'block';
+        // Show loading state if it exists
+        if (loadingState) {
+            loadingState.style.display = 'block';
+        }
         
-        // Fetch data from API - use full URL with port
-        const response = await fetch('http://localhost:8000/api/history');
+        // API URL - use Railway backend in production, local in development
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? '' 
+            : 'https://immichange-production.up.railway.app';
+        
+        const response = await fetch(`${API_BASE}/api/history`);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -356,8 +627,16 @@ async function loadDashboardData(page = 1) {
         const result = await response.json();
         
         if (result.success && result.data && result.data.length > 0) {
+            // Store all events data for filtering
+            allEventsData = result.data;
+            
+            // Populate filter dropdowns with unique values
+            populateFilterDropdowns(allEventsData);
+            
             // Hide loading state
-            loadingState.style.display = 'none';
+            if (loadingState) {
+                loadingState.style.display = 'none';
+            }
             
             // Update pagination info based on total records
             const paginationInfo = updatePaginationInfo(result.count || result.data.length);
@@ -384,7 +663,11 @@ async function loadDashboardData(page = 1) {
             
         } else {
             // Show fallback message
-            loadingState.innerHTML = '<p>No policy updates available at the moment.</p>';
+            if (loadingState) {
+                loadingState.innerHTML = '<p>No policy updates available at the moment.</p>';
+            } else {
+                dataRowsContainer.innerHTML = '<p>No policy updates available at the moment.</p>';
+            }
             updatePaginationInfo(0);
             updateWeeklyBadge(0);
         }
@@ -402,6 +685,16 @@ function loadSampleData(page = 1) {
     const dataRowsContainer = document.getElementById('dataRows');
     const loadingState = document.getElementById('loadingState');
     
+    // Check if elements exist
+    if (!dataRowsContainer) {
+        console.error('dataRows element not found in loadSampleData');
+        return;
+    }
+    
+    if (!loadingState) {
+        console.error('loadingState element not found in loadSampleData');
+        return;
+    }
     // Extended sample data to test pagination
     const sampleData = [
         {
@@ -413,7 +706,7 @@ function loadSampleData(page = 1) {
             summary: "DHS Changes Process for Awarding H-1B Work Visas to Better Protect American Workers",
             source: "https://www.uscis.gov/newsroom/news-releases/dhs-changes-process-for-awarding-h-1b-work-visas",
             timestamp: "2025-12-23T14:04:14+00:00",
-            effective_date: "2025-12-23T14:04:14+00:00"
+            effective_date: null  // No specific effective date calculated
         },
         {
             country: "United States",
@@ -424,7 +717,7 @@ function loadSampleData(page = 1) {
             summary: "DHS, DOJ Announce Rule to Bar Asylum for Aliens Who Pose Security Threats",
             source: "https://www.uscis.gov/newsroom/alerts/dhs-doj-announce-rule-to-bar-asylum",
             timestamp: "2025-12-29T15:58:15+00:00",
-            effective_date: "2025-12-29T15:58:15+00:00"
+            effective_date: null  // No specific effective date calculated
         },
         {
             country: "Canada",
@@ -435,7 +728,7 @@ function loadSampleData(page = 1) {
             summary: "New Express Entry Draw Invites 3,500 Candidates",
             source: "https://www.canada.ca/en/immigration-refugees-citizenship",
             timestamp: "2025-12-20T10:30:00+00:00",
-            effective_date: "2025-12-20T10:30:00+00:00"
+            effective_date: null  // No specific effective date calculated
         },
         {
             country: "United Kingdom",
@@ -446,7 +739,7 @@ function loadSampleData(page = 1) {
             summary: "UK Increases Immigration Health Surcharge Fees",
             source: "https://www.gov.uk/healthcare-immigration-application",
             timestamp: "2025-12-18T09:15:00+00:00",
-            effective_date: "2026-01-01T00:00:00+00:00"
+            effective_date: "2026-01-01T00:00:00+00:00"  // Fee changes typically have future effective dates
         },
         {
             country: "Australia",
@@ -457,9 +750,15 @@ function loadSampleData(page = 1) {
             summary: "Faster Processing Times for TSS Visa Applications",
             source: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/temporary-skill-shortage-482",
             timestamp: "2025-12-15T14:45:00+00:00",
-            effective_date: "2025-12-15T14:45:00+00:00"
+            effective_date: null  // Processing updates typically effective immediately (no specific date)
         }
     ];
+    
+    // Store sample data for filtering
+    allEventsData = sampleData;
+    
+    // Populate filter dropdowns with sample data
+    populateFilterDropdowns(allEventsData);
     
     // Hide loading state
     loadingState.style.display = 'none';
