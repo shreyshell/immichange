@@ -616,7 +616,7 @@ async function loadDashboardData(page = 1) {
         // API URL - use Railway backend in production, local in development
         const API_BASE = window.location.hostname === 'localhost' 
             ? '' 
-            : 'https://immichange-production.up.railway.app';
+            : 'https://web-production-cc3f1.up.railway.app';
         
         const response = await fetch(`${API_BASE}/api/history`);
         
